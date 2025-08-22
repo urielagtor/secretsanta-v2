@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intercambio de Regalos Diciembre</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <style>
+        /* --- ESTILOS GENERALES Y RESET --- */
+        :root {
+            --primary-green: #0CB50C;
+            --primary-red: #EA1212;
+            --primary-yellow: #E6E020;
+            --primary-white: #FFFFFF;
+            --text-color: #333;
+            --border-radius: 10px;
+            --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100%;
+            font-family: 'Segoe UI', 'Comic Sans MS', cursive, sans-serif;
+            background-color: #f7f7f7;
+            color: var(--text-color);
+        }
+
+        body {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><text x="0" y="20" font-size="20" fill="rgba(234,18,18,0.1)">🎅</text><text x="50" y="70" font-size="20" fill="rgba(12,181,12,0.1)">🎁</text></svg>');
+            background-position: bottom right;
+            background-repeat: no-repeat;
+        }
+        
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .main {
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .part {
+            display: flex;
+            flex-direction: column;
+            padding: 25px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        /* --- SECCIÓN DE INSTRUCCIONES --- */
+        .instructions {
+            margin: auto;
+            max-width: 600px;
+        }
+        
+        .instructions h1 {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 2rem;
+            color: var(--primary-red);
+        }
+
+        .instructions p {
+            margin-top: 15px;
+            line-height: 1.6;
+        }
+        
+        /* --- FORMULARIO Y ENTRADA DE DATOS --- */
+        #form {
+            background-color: rgba(255, 255, 255, .8);
+            backdrop-filter: blur(5px);
+        }
+
+        .input {
+            width: 100%;
+            flex: auto;
+            border: 5px solid var(--primary-green);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            background-color: rgba(255, 255, 255, .7);
+            outline: none;
+            font-family: monospace;
+            font-size: 1rem;
+            min-height: 300px;
+            resize: vertical;
+        }
+
+        .generate {
+            display: block;
+            margin-top: 20px;
+            height: 70px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            font-size: 1.8rem;
+            font-weight: bold;
+            background-color: var(--primary-red);
+            color: var(--primary-white);
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        
+        .generate:hover {
+            background-color: #c81010;
+            transform: scale(1.02);
+        }
+
+        .generate:focus {
+            outline: 3px solid var(--primary-yellow);
+        }
+        
+        /* --- SECCIÓN DE RESULTADOS --- */
+        .result {
+            margin-top: 20px;
+            border: 5px solid var(--primary-yellow);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            background: var(--primary-white);
+            box-shadow: var(--box-shadow);
+        }
+
+        .result.none { display: none; }
+        .result.error {
+            border-color: var(--primary-red);
+            color: var(--primary-red);
+            font-weight: bold;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .result-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .result-row:last-child {
+             border-bottom: none;
+        }
+
+        .result-name {
+            font-weight: bold;
+            padding-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .result-link-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .result-link {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .copy-btn {
+            margin-left: 10px;
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            background: #f0f0f0;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        /* --- ESTILOS DE LA VISTA DE REVELACIÓN (MODAL) --- */
+        .pairing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .pairing-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .pairing-wrapper {
+            padding: 15px;
+            background: repeating-linear-gradient(
+                45deg,
+                #5CC48A, #5CC48A 20px, #FFFFFF 20px, #FFFFFF 40px,
+                #EF3D3D 40px, #EF3D3D 60px, #FFFFFF 60px, #FFFFFF 80px
+            );
+            box-shadow: 0 5px 25px rgba(0, 0, 0, .5);
+            border-radius: var(--border-radius);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        .pairing-overlay.visible .pairing-wrapper {
+             transform: scale(1);
+        }
+
+        .pairing-content {
+            padding: 40px;
+            background: var(--primary-white);
+            text-align: center;
+            border-radius: var(--border-radius);
+            position: relative;
+        }
+        
+        .pairing-title { font-size: 1.5rem; }
+        #pairing-name {
+            font-size: clamp(2.5rem, 10vw, 5rem);
+            font-weight: bold;
+            color: var(--primary-red);
+            margin: 10px 0;
+        }
+        #pairing-details { font-size: 1.2rem; margin-bottom: 20px; }
+        
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        /* --- MEDIA QUERIES PARA DISPOSITIVOS MÓVILES --- */
+        @media (max-width: 768px) {
+            .main {
+                flex-direction: column;
+            }
+            .part {
+                padding: 15px;
+            }
+            .instructions h1 { font-size: 1.8rem; }
+            .generate { font-size: 1.5rem; height: 60px; }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="main">
+        <div class="part">
+            <header class="instructions">
+                <h1>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="#0CB50C"><path d="M12 2c2.47 0 4.79.9 6.64 2.51.43.38.47 1.01.09 1.44l-1.4 1.56c-.34.38-.9.4-1.25.04-1.27-1.12-2.86-1.75-4.58-1.75s-3.31.63-4.58 1.75c-.35.36-.91.34-1.25-.04l-1.4-1.56c-.38-.43-.34-1.06.09-1.44C7.21 2.9 9.53 2 12 2zm0 6c1.08 0 2.12.31 3.02.85.38.23.86.13 1.14-.23l1.37-1.71c.32-.4.23-.98-.19-1.28-1.58-1.14-3.46-1.83-5.46-1.83s-3.88.69-5.46 1.83c-.42.3-.51.88-.19 1.28l1.37 1.71c.28.36.76.46 1.14.23C9.88 8.31 10.92 8 12 8zM6 15.5c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v2H6v-2zM2 13.5c0-1.1.9-2 2-2h1c.55 0 1 .45 1 1v4c0 .55-.45 1-1 1H4c-1.1 0-2-.9-2-2v-2zm20 0c0-1.1-.9-2-2-2h-1c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h1c1.1 0 2-.9 2-2v-2z"/></svg>
+                    Intercambio de Regalos
+                </h1>
+                <p>Genera una lista de intercambio de forma rápida y segura. Sin registros ni datos personales.</p>
+                <p>Escribe el nombre de cada participante en una nueva línea. Puedes añadir reglas de exclusión (`Maria !Juan`) o forzar parejas (`Ana = Pedro`). Luego, haz clic en "Generar" y comparte el enlace único con cada persona.</p>
+            </header>
+        </div>
+
+        <form id="form" class="part">
+            <textarea id="input" class="input" autofocus placeholder="Escribe aquí los nombres y reglas...&#10;&#10;# Ejemplo:&#10;Ana&#10;Pedro = Ana&#10;Maria !Juan&#10;Juan !Maria&#10;Carlos"></textarea>
+            <button type="submit" class="generate">Generar Lista</button>
+            <div id="result" class="result none"></div>
+        </form>
+    </main>
+    
+    <div id="pairing-overlay" class="pairing-overlay">
+        <div class="pairing-wrapper">
+            <div class="pairing-content">
+                <button id="close-btn" class="close-btn">&times;</button>
+                <div class="pairing-title">¡Hola <span id="participant-name"></span>! Te toca darle regalo a:</div>
+                <div id="pairing-name"></div>
+                <div id="pairing-details"></div>
+                <div class="pairing-title">¡Mucha suerte!</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- CLASE SecretSanta (LÓGICA PRINCIPAL) ---
+            class SecretSanta {
+                constructor() {
+                    this.names = [];
+                    this.enforced = {};
+                    this.blacklists = {};
+                }
+
+                add(name) {
+                    if (this.names.includes(name)) {
+                        throw new Error(`El nombre "${name}" está duplicado.`);
+                    }
+                    this.names.push(name);
+
+                    const subapi = {
+                        enforce: (other) => {
+                            this.enforced[name] = other;
+                            return subapi;
+                        },
+                        blacklist: (other) => {
+                            if (!this.blacklists[name]) {
+                                this.blacklists[name] = [];
+                            }
+                            if (!this.blacklists[name].includes(other)) {
+                                this.blacklists[name].push(other);
+                            }
+                            return subapi;
+                        }
+                    };
+                    return subapi;
+                }
+
+                generate() {
+                    let pairings = {};
+                    let candidatePairings = {};
+
+                    this.names.forEach(name => {
+                        if (this.enforced[name]) {
+                            const enforced = this.enforced[name];
+                            if (!this.names.includes(enforced)) {
+                                throw new Error(`${name} está emparejado con ${enforced}, pero ${enforced} no está en la lista.`);
+                            }
+                            if (Object.values(pairings).includes(enforced)) {
+                                throw new Error(`Múltiples personas están emparejadas con ${enforced}.`);
+                            }
+                            candidatePairings[name] = [this.enforced[name]];
+                        } else {
+                            let candidates = _.difference(this.names, [name]);
+                            if (this.blacklists[name]) {
+                                candidates = _.difference(candidates, this.blacklists[name]);
+                            }
+                            candidatePairings[name] = candidates;
+                        }
+                    });
+
+                    const findNextGifter = () => {
+                        const names = Object.keys(candidatePairings);
+                        if (names.length === 0) return null;
+                        
+                        const minCandidateCount = _.min(names.map(name => candidatePairings[name].length));
+                        const potentialGifters = names.filter(name => candidatePairings[name].length === minCandidateCount);
+                        
+                        return _.sample(potentialGifters);
+                    };
+
+                    while (Object.keys(candidatePairings).length > 0) {
+                        const name = findNextGifter();
+                        if (!name || candidatePairings[name].length === 0) {
+                            throw new Error(`No se pudo encontrar un regalo para ${name}. Intenta de nuevo o quita algunas reglas de exclusión.`);
+                        }
+
+                        const pairing = _.sample(candidatePairings[name]);
+                        delete candidatePairings[name];
+
+                        Object.keys(candidatePairings).forEach(key => {
+                            candidatePairings[key] = _.without(candidatePairings[key], pairing);
+                        });
+                        pairings[name] = pairing;
+                    }
+
+                    return pairings;
+                }
+            }
+            
+            // --- ELEMENTOS DEL DOM ---
+            const form = document.getElementById('form');
+            const input = document.getElementById('input');
+            const resultDiv = document.getElementById('result');
+            const pairingOverlay = document.getElementById('pairing-overlay');
+            const closeBtn = document.getElementById('close-btn');
+
+            // --- MANEJO DE ESTADO (LOCALSTORAGE) ---
+            const persistInput = () => window.localStorage.setItem('input', input.value);
+            const restoreInput = () => {
+                const content = window.localStorage.getItem('input');
+                if (content) input.value = content;
+            };
+
+            input.addEventListener('input', persistInput);
+            restoreInput();
+
+            // --- FUNCIONES DE LA INTERFAZ ---
+            const resetResult = () => {
+                resultDiv.classList.add('none');
+                resultDiv.classList.remove('error');
+                resultDiv.innerHTML = '';
+            };
+
+            const showError = (text) => {
+                resultDiv.classList.remove('none');
+                resultDiv.classList.add('error');
+                resultDiv.innerText = text;
+            };
+            
+            const showSuccess = (pairings) => {
+                resetResult();
+                resultDiv.classList.remove('none');
+
+                const table = document.createElement('table');
+                table.className = 'result-table';
+                resultDiv.appendChild(table);
+
+                Object.keys(pairings).sort().forEach(name => {
+                    const pairing = pairings[name];
+                    const tr = document.createElement('tr');
+                    tr.className = 'result-row';
+
+                    const tdName = document.createElement('td');
+                    tdName.className = 'result-name';
+                    tdName.innerText = name;
+
+                    const tdLinkContainer = document.createElement('td');
+                    tdLinkContainer.className = 'result-link-container';
+                    
+                    const link = document.createElement('a');
+                    link.className = 'result-link';
+                    link.href = '#';
+                    link.innerText = '🎁 Revelar amigo secreto';
+                    link.setAttribute('data-name', name);
+                    link.setAttribute('data-pairing', pairing);
+                    link.addEventListener('click', handleRevealClick);
+
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'copy-btn';
+                    copyButton.innerText = 'Copiar';
+                    copyButton.addEventListener('click', () => {
+                        const key = String(_.random(0x1000, 0xFFFF).toString(16));
+                        const encryptedPairing = CryptoJS.AES.encrypt(pairing, key).toString();
+                        const pairingUrl = `${window.location.href.split('#')[0]}#name=${encodeURIComponent(name)}&key=${encodeURIComponent(key)}&pairing=${encodeURIComponent(encryptedPairing)}`;
+                        
+                        navigator.clipboard.writeText(pairingUrl).then(() => {
+                            copyButton.innerText = '¡Copiado!';
+                            setTimeout(() => { copyButton.innerText = 'Copiar'; }, 2000);
+                        }).catch(err => console.error('Error al copiar:', err));
+                    });
+
+                    tdLinkContainer.appendChild(link);
+                    tdLinkContainer.appendChild(copyButton);
+                    tr.appendChild(tdName);
+                    tr.appendChild(tdLinkContainer);
+                    table.appendChild(tr);
+                });
+            };
+            
+            // --- LÓGICA DE GENERACIÓN ---
+            const handleGenerate = (e) => {
+                e.preventDefault();
+                resetResult();
+
+                const content = input.value
+                    .replace(/(\r\n|\r)/g, '\n')
+                    .replace(/[ \t]+/g, ' ')
+                    .replace(/^ | $/gm, '')
+                    .replace(/^#.*$/gm, '')
+                    .replace(/\n+/g, '\n')
+                    .trim();
+
+                const lines = content.split('\n').filter(line => line.length > 0);
+                if (lines.length < 2) {
+                    return showError('Necesitas al menos 2 participantes.');
+                }
+                
+                const santa = new SecretSanta();
+                try {
+                    for (const line of lines) {
+                        const match = line.match(/^((?:(?![!=]).)+)((?: [!=](?:(?! [!=]).)+)*)$/);
+                        if (!match) {
+                            throw new Error(`Error de sintaxis: "${line}" no es válido.`);
+                        }
+                        const name = match[1].trim();
+                        const rules = match[2] ? match[2].match(/[!=][^!=]+/g) : [];
+                        const person = santa.add(name);
+
+                        rules.forEach(rule => {
+                            const operator = rule.charAt(0);
+                            const other = rule.slice(1).trim();
+                            if (operator === '=') {
+                                person.enforce(other);
+                            } else if (operator === '!') {
+                                person.blacklist(other);
+                            }
+                        });
+                    }
+                    showSuccess(santa.generate());
+                } catch (err) {
+                    showError(err.message);
+                }
+            };
+
+            form.addEventListener('submit', handleGenerate);
+            
+            // --- LÓGICA DE REVELACIÓN (MODAL) ---
+            const showPairingModal = (name, pairing) => {
+                const pairingDefinition = pairing.match(/^([^(]+)(?: (\([^)]+\)))?$/) || [null, pairing, ''];
+                
+                document.getElementById('participant-name').innerText = name;
+                document.getElementById('pairing-name').innerText = pairingDefinition[1].trim();
+                const detailsEl = document.getElementById('pairing-details');
+                
+                if (pairingDefinition[2]) {
+                    detailsEl.innerText = pairingDefinition[2];
+                    detailsEl.style.display = 'block';
+                } else {
+                    detailsEl.style.display = 'none';
+                }
+                pairingOverlay.classList.add('visible');
+            };
+
+            const hidePairingModal = () => pairingOverlay.classList.remove('visible');
+            closeBtn.addEventListener('click', hidePairingModal);
+            pairingOverlay.addEventListener('click', (e) => {
+                if (e.target === pairingOverlay) hidePairingModal();
+            });
+
+            const handleRevealClick = (e) => {
+                e.preventDefault();
+                const name = e.currentTarget.getAttribute('data-name');
+                const pairing = e.currentTarget.getAttribute('data-pairing');
+                
+                if (confirm(`Estás a punto de ver a quién le regala ${name}. ¿Estás seguro de que eres ${name}?`)) {
+                    showPairingModal(name, pairing);
+                }
+            };
+
+            // --- MANEJO DE REVELACIÓN POR URL ---
+            const checkUrlForPairing = () => {
+                if (window.location.hash) {
+                    try {
+                        const params = new URLSearchParams(window.location.hash.substring(1));
+                        const name = params.get('name');
+                        const key = params.get('key');
+                        const encryptedPairing = params.get('pairing');
+                        
+                        if (name && key && encryptedPairing) {
+                            const decryptedBytes = CryptoJS.AES.decrypt(encryptedPairing, key);
+                            const pairing = decryptedBytes.toString(CryptoJS.enc.Utf8);
+                            if (pairing) {
+                                showPairingModal(name, pairing);
+                                // Limpiar el hash para no volver a mostrarlo si se recarga la página
+                                history.pushState("", document.title, window.location.pathname + window.location.search);
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Error al descifrar el regalo desde la URL:", e);
+                        alert("El enlace para revelar el amigo secreto parece estar dañado o es incorrecto.");
+                    }
+                }
+            };
+            
+            checkUrlForPairing();
+
+        });
+    </script>
+</body>
+</html>
