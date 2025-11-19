@@ -53,7 +53,7 @@ export function ParticipantsList({
 
   return (
     <div className="space-y-4">
-      <p className="mt-1 text-xs text-gray-500">
+      <p className="mt-1 text-xs" style={{ color: '#666' }}>
         {t('participants.generationWarning')}
       </p>
 
@@ -74,7 +74,8 @@ export function ParticipantsList({
       <button
         type="button"
         onClick={onGeneratePairs}
-        className="w-full bg-green-500 text-white p-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2"
+        className="button-90s w-full flex items-center justify-center gap-2"
+        style={{ background: '#00FF00', color: '#000', fontWeight: 'bold', padding: '8px 16px' }}
       >
         <ArrowsClockwise size={20} weight="bold" />
         {t('participants.generatePairs')}
