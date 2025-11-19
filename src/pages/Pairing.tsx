@@ -47,6 +47,8 @@ export function Pairing() {
   const [error, setError] = useState<string | null>(null);
   const [assignment, setAssignment] = useState<[string, ReceiverData] | null>(null);
   const [instructions, setInstructions] = useState<string | null>(null);
+  const [revealing, setRevealing] = useState(false);
+  const [nameRevealed, setNameRevealed] = useState(false);
 
   useEffect(() => {
     const decryptReceiver = async () => {
@@ -63,6 +65,17 @@ export function Pairing() {
 
     decryptReceiver();
   }, [searchParams, t]);
+
+  useEffect(() => {
+    if (assignment && !loading && !revealing) {
+      setRevealing(true);
+      const timer = setTimeout(() => {
+        setNameRevealed(true);
+      }, 2000); // 2 second delay before revealing the name
+      
+      return () => clearTimeout(timer);
+    }
+  }, [assignment, loading, revealing]);
 
   if (error) {
     return (
@@ -96,8 +109,34 @@ export function Pairing() {
                   }}
                 />
               </p>
-              <div className="text-8xl font-bold text-center p-6 font-dancing-script">
-                {assignment[1].name}
+              <div className="text-8xl font-bold text-center p-6 font-dancing-script min-h-[120px] flex items-center justify-center">
+                {nameRevealed ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  >
+                    {assignment[1].name}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-gray-400 text-2xl text-center"
+                  >
+                    <div className="space-y-2">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="inline-block"
+                      >
+                        🎁
+                      </motion.div>
+                      <div className="text-sm">Revealing your Secret Santa...</div>
+                    </div>
+                  </motion.div>
+                )}
               </div>
               {(instructions || assignment[1].hint) && (
                 <div className="mt-6 flex p-4 bg-gray-50 rounded-lg leading-6 text-gray-600 whitespace-pre-wrap">
