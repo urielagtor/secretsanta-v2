@@ -3,15 +3,35 @@
 @tailwind utilities;
 
 body {
-  background: url(../static/snow.png), url(../static/snow.png), #fefae8 url(../static/cats.png) bottom left no-repeat;
+  position: relative;
+  background:
+    url(../static/snow.png),
+    url(../static/snow.png),
+    #ffffff url(../static/vader-santa.webp) -20% bottom no-repeat;
   background-repeat: repeat, repeat, no-repeat;
-  background-size: auto auto, auto auto, contain;
+  background-size: auto auto, auto auto, auto 90vh;
   background-attachment: fixed, fixed, fixed;
   animation-name: snow;
   animation-duration: 5s;
   animation-iteration-count: infinite;
   animation-timing-function: linear;
   font-family: 'Comic Sans MS';
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 85% 110% at 0% 55%,
+    transparent 0%,
+    transparent 18%,
+    rgba(255, 255, 255, 0.3) 25%,
+    rgba(255, 255, 255, 0.7) 33%,
+    #ffffff 43%
+  );
+  pointer-events: none;
+  z-index: -1;
 }
 
 .bg-postcard {
@@ -48,9 +68,9 @@ body {
 
 @keyframes snow {
   0% {
-    background-position: 130px 40px, 0 0, 0 0;
+    background-position: 130px 40px, 0 0, -20% bottom;
   }
   100% {
-    background-position: 130px 640px, 0 300px, 0 0
+    background-position: 130px 640px, 0 300px, -20% bottom;
   }
 }

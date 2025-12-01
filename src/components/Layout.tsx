@@ -14,7 +14,7 @@ export function Layout({ menuItems, children }: LayoutProps) {
           {menuItems}
         </SideMenu>
 
-        <div className="my-12 md:my-16 flex flex-col justify-around lg:flex-row gap-12 md:gap-16">
+        <div className="mt-2 md:mt-4 ml-4 md:ml-12 flex flex-col justify-around lg:flex-row gap-12 md:gap-16">
           {children}
         </div>
       </div>
