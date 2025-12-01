@@ -80,7 +80,7 @@ export function Pairing() {
 
   return (
     <Layout menuItems={menuItems}>
-      <div>
+      <div className="pt-4 sm:pt-8 md:pt-0">
         {!loading && assignment && (
           <motion.div
             initial={{ rotateZ: -360 * 1, scale: 0 }}
@@ -89,7 +89,7 @@ export function Pairing() {
             transition={{ ease: `easeIn`, duration: .6 }}
           >
             <PostCard>
-              <h1 className="text-3xl font-bold mb-6 text-center text-red-700">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center text-red-700">
                 {t('pairing.title')}
               </h1>
               <p className="mb-6 text-center text-gray-600">
@@ -100,12 +100,12 @@ export function Pairing() {
                   }}
                 />
               </p>
-              <div className="text-8xl font-bold text-center p-6 font-dancing-script">
+              <div className="text-4xl sm:text-6xl md:text-8xl font-bold text-center p-4 sm:p-6 font-dancing-script break-words">
                 {assignment[1].name}
               </div>
               {(instructions || assignment[1].hint) && (
-                <div className="mt-6 flex p-4 bg-gray-50 rounded-lg leading-6 text-gray-600 whitespace-pre-wrap">
-                  <div className="mr-4">
+                <div className="mt-4 sm:mt-6 flex p-3 sm:p-4 bg-gray-50 rounded-lg leading-6 text-sm sm:text-base text-gray-600 whitespace-pre-wrap">
+                  <div className="mr-3 sm:mr-4">
                     <Info size={24}/>
                   </div>
                   <div className="space-y-2">

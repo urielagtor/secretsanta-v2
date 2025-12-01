@@ -18,6 +18,13 @@ body {
   font-family: 'Comic Sans MS';
 }
 
+@media (max-width: 640px) {
+  body {
+    background-size: auto auto, auto auto, auto 45vh;
+    animation-name: snow-mobile;
+  }
+}
+
 body::after {
   content: '';
   position: fixed;
@@ -32,6 +39,19 @@ body::after {
   );
   pointer-events: none;
   z-index: -1;
+}
+
+@media (max-width: 640px) {
+  body::after {
+    background: linear-gradient(
+      to bottom,
+      #ffffff 0%,
+      #ffffff 54%,
+      transparent 69%,
+      transparent 100%
+    );
+    z-index: 0;
+  }
 }
 
 .bg-postcard {
@@ -66,11 +86,21 @@ body::after {
   @apply bg-white;
 }
 
+
 @keyframes snow {
   0% {
     background-position: 130px 40px, 0 0, -20% bottom;
   }
   100% {
     background-position: 130px 640px, 0 300px, -20% bottom;
+  }
+}
+
+@keyframes snow-mobile {
+  0% {
+    background-position: 130px 40px, 0 0, center bottom;
+  }
+  100% {
+    background-position: 130px 640px, 0 300px, center bottom;
   }
 }
