@@ -108,7 +108,7 @@ export function Home() {
       <MenuItem key={`vanity`} to="https://bsky.app/profile/mael.dev" icon={<Star className={`text-orange-500`} weight={`fill`}/>}>
         {t(`home.vanity`)}
       </MenuItem>
-      <MenuItem key={`sponsor`} to="https://github.com/sponsors/arcanis?frequency=one-time&sponsor=arcanis" icon={<Heart className={`text-red-700`} weight={`fill`}/>}>
+      <MenuItem key={`sponsor`} to="asha" icon={<Heart className={`text-red-700`} weight={`fill`}/>}>
         {t(`home.sponsor`)}
       </MenuItem>
     </div>,
